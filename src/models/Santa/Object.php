@@ -43,8 +43,24 @@ class Object
         }
     }
 
-    public function getDB() {
-        return $this->db;
+    /**
+     * Get the list of Santas from the DB
+     *
+     * @param bool $remaining Whether to return remaining santas or all
+     * @return array
+     */
+    public function getSantas($remaining = false) {
+        // Do we want just the remaining Santas?
+        $taken_query_part = $remaining ? "WHERE taken = 0" : "";
+
+        // Setup the query
+        $this->db->query("
+            SELECT * FROM {$this->db->getTableName("santa_santas")}
+            {$taken_query_part}
+        ");
+
+        // Execute and return results
+        return $this->db->results();
     }
 
     /**
