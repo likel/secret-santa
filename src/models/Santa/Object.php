@@ -43,8 +43,213 @@ class Object
         }
     }
 
-    public function getDB() {
-        return $this->db;
+    /**
+     * Returns if the get parameter is a santa
+     *
+     * @return bool
+     */
+    public function isSanta() {
+        if(empty($_GET['santa'])) {
+            return false;
+        }
+
+        $santa_object = $this->getSanta($_GET['santa']);
+
+        return !empty($santa_object) ? $santa_object : false;
+    }
+
+    /**
+     * Get the list of Santas from the DB
+     *
+     * @param bool $remaining Whether to return remaining santas or all
+     * @return array
+     */
+    public function getSantas($remaining = false) {
+        if(!$remaining) {
+            $this->db->query("
+                SELECT * FROM {$this->db->getTableName("santas")}
+            ");
+        } else {
+            $this->db->query("
+                SELECT a.* FROM {$this->db->getTableName("santas")} AS a
+                LEFT JOIN {$this->db->getTableName("kids")} AS b ON a.id = b.gifter
+                WHERE b.gifter IS NULL
+            ");
+        }
+
+        // Execute and return results
+        return $this->db->results();
+    }
+
+    /**
+     * Get a single santa from the DB
+     *
+     * @param string $secret_phrase The phrase attached to the santa
+     * @return array|false
+     */
+    public function getSanta($secret_phrase = '') {
+        if(empty($secret_phrase)) {
+            return false;
+        }
+
+        // Setup the query
+        $this->db->query("
+            SELECT * FROM {$this->db->getTableName("santas")}
+            WHERE secret_phrase = :secret_phrase
+        ");
+
+        $this->db->bind(':secret_phrase', $secret_phrase);
+
+        // Execute and return results
+        return $this->db->result();
+    }
+
+    /**
+     * Assigns a giftee to a santa if one isn't already set
+     *
+     * @param int $santa_id The santa's ID
+     * @return void|string
+     */
+    public function assignSanta($santa_id) {
+        $gifted = $this->hasGiftee($santa_id);
+        if(empty($gifted)) {
+            $santas_remaining = $this->getSantas(true);
+
+            $santa_id_to_set = $santa_id;
+            while($santa_id_to_set == $santa_id) {
+                $random_santa = array_rand($santas_remaining);
+                $santa_id_to_set = $santas_remaining[$random_santa]['id'];
+            }
+
+            // Setup the query
+            $this->db->query("
+                INSERT INTO {$this->db->getTableName("kids")} (gifter, gifted)
+                VALUES (:gifter, :gifted)
+            ");
+
+            $this->db->bind(':gifter', $santa_id);
+            $this->db->bind(':gifted', $santa_id_to_set);
+
+            // Execute
+            $this->db->execute();
+
+            return $santas_remaining[$random_santa]['santa_name'];
+        } else {
+            return $gifted['santa_name'];
+        }
+    }
+
+    /**
+     * Assigns a keyword to a santa if one isn't already set
+     *
+     * @param int $santa_id The santa's ID
+     * @return string
+     */
+    public function assignKeyword($santa_id) {
+        $keyword = $this->hasKeyword($santa_id);
+        if(empty($keyword)) {
+            $keywords_remaining = $this->getKeywords(true);
+
+            $keyword_id = array_rand($keywords_remaining);
+            $keyword = $keywords_remaining[$keyword_id]['santa_keyword'];
+
+            // Setup the query
+            $this->db->query("
+                INSERT INTO {$this->db->getTableName("keywords")} (santa_id, keyword)
+                VALUES (:santa_id, :keyword)
+            ");
+
+            $this->db->bind(':santa_id', $santa_id);
+            $this->db->bind(':keyword', $keyword);
+
+            // Execute
+            $this->db->execute();
+
+            return $keyword;
+        } else {
+            return $keyword['keyword'];
+        }
+    }
+
+    /**
+     * Get the list of Santa's keywords from the DB
+     *
+     * @param bool $remaining Whether to return remaining keywords or all
+     * @return array
+     */
+    public function getKeywords($remaining = false) {
+        if(!$remaining) {
+            $this->db->query("
+                SELECT * FROM {$this->db->getTableName("keywords")}
+            ");
+        } else {
+            $this->db->query("
+                SELECT a.* FROM {$this->db->getTableName("santas")} AS a
+                LEFT JOIN {$this->db->getTableName("keywords")} AS b ON a.id = b.santa_id
+                WHERE b.santa_id IS NULL
+            ");
+        }
+
+        // Execute and return results
+        return $this->db->results();
+    }
+
+    /**
+     * Returns if the santa has a giftee already
+     *
+     * @param int $santa_id The santa's ID
+     * @return int
+     */
+    public function hasGiftee($santa_id) {
+        // Setup the query
+        $this->db->query("
+            SELECT b.*, c.santa_name FROM {$this->db->getTableName("santas")} AS a
+            JOIN {$this->db->getTableName("kids")} AS b ON a.id = b.gifter
+            JOIN {$this->db->getTableName("santas")} AS c ON c.id = b.gifted
+            WHERE a.id = :santa_id
+        ");
+
+        $this->db->bind(':santa_id', $santa_id);
+
+        // Execute and return results
+        return $this->db->result();
+    }
+
+    /**
+     * Returns if the santa has a keyword already
+     *
+     * @param int $santa_id The santa's ID
+     * @return int
+     */
+    public function hasKeyword($santa_id) {
+        // Setup the query
+        $this->db->query("
+            SELECT b.* FROM {$this->db->getTableName("santas")} AS a
+            JOIN {$this->db->getTableName("keywords")} AS b ON a.id = b.santa_id
+            WHERE a.id = :santa_id
+        ");
+
+        $this->db->bind(':santa_id', $santa_id);
+
+        // Execute and return results
+        return $this->db->result();
+    }
+
+    /**
+     * Truncate kids and keywords
+     */
+    public function truncate() {
+        $this->db->query("
+            TRUNCATE TABLE {$this->db->getTableName("kids")}
+        ");
+
+        $this->db->execute();
+
+        $this->db->query("
+            TRUNCATE TABLE {$this->db->getTableName("keywords")}
+        ");
+
+        $this->db->execute();
     }
 
     /**
