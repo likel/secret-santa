@@ -108,10 +108,11 @@ class Object
      * Assigns a giftee to a santa if one isn't already set
      *
      * @param int $santa_id The santa's ID
-     * @return void
+     * @return void|string
      */
     public function assignSanta($santa_id) {
-        if(empty($this->hasGiftee($santa_id))) {
+        $gifted = $this->hasGiftee($santa_id);
+        if(empty($gifted)) {
             $santas_remaining = $this->getSantas(true);
 
             $santa_id_to_set = $santa_id;
@@ -131,6 +132,10 @@ class Object
 
             // Execute
             $this->db->execute();
+
+            return $santas_remaining[$random_santa]['santa_name'];
+        } else {
+            return $gifted['santa_name'];
         }
     }
 
@@ -138,10 +143,11 @@ class Object
      * Assigns a keyword to a santa if one isn't already set
      *
      * @param int $santa_id The santa's ID
-     * @return void
+     * @return string
      */
     public function assignKeyword($santa_id) {
-        if(empty($this->hasKeyword($santa_id))) {
+        $keyword = $this->hasKeyword($santa_id);
+        if(empty($keyword)) {
             $keywords_remaining = $this->getKeywords(true);
 
             $keyword_id = array_rand($keywords_remaining);
@@ -158,6 +164,10 @@ class Object
 
             // Execute
             $this->db->execute();
+
+            return $keyword;
+        } else {
+            return $keyword['keyword'];
         }
     }
 
@@ -193,8 +203,9 @@ class Object
     public function hasGiftee($santa_id) {
         // Setup the query
         $this->db->query("
-            SELECT b.* FROM {$this->db->getTableName("santas")} AS a
+            SELECT b.*, c.santa_name FROM {$this->db->getTableName("santas")} AS a
             JOIN {$this->db->getTableName("kids")} AS b ON a.id = b.gifter
+            JOIN {$this->db->getTableName("santas")} AS c ON c.id = b.gifted
             WHERE a.id = :santa_id
         ");
 
@@ -222,6 +233,23 @@ class Object
 
         // Execute and return results
         return $this->db->result();
+    }
+
+    /**
+     * Truncate kids and keywords
+     */
+    public function truncate() {
+        $this->db->query("
+            TRUNCATE TABLE {$this->db->getTableName("kids")}
+        ");
+
+        $this->db->execute();
+
+        $this->db->query("
+            TRUNCATE TABLE {$this->db->getTableName("keywords")}
+        ");
+
+        $this->db->execute();
     }
 
     /**
