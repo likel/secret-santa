@@ -55,7 +55,7 @@ class Object
 
         $santa_object = $this->getSanta($_GET['santa']);
 
-        return !empty($santa_object) ? $santa_object['id'] : false;
+        return !empty($santa_object) ? $santa_object : false;
     }
 
     /**
@@ -142,22 +142,19 @@ class Object
      */
     public function assignKeyword($santa_id) {
         if(empty($this->hasKeyword($santa_id))) {
-            $keywords_remaining = $this->getSantas(true);
+            $keywords_remaining = $this->getKeywords(true);
 
-            $santa_id_to_set = $santa_id;
-            while($santa_id_to_set == $santa_id) {
-                $random_santa = array_rand($santas_remaining);
-                $santa_id_to_set = $santas_remaining[$random_santa]['id'];
-            }
+            $keyword_id = array_rand($keywords_remaining);
+            $keyword = $keywords_remaining[$keyword_id]['santa_keyword'];
 
             // Setup the query
             $this->db->query("
-                INSERT INTO {$this->db->getTableName("kids")} (gifter, gifted)
-                VALUES (:gifter, :gifted)
+                INSERT INTO {$this->db->getTableName("keywords")} (santa_id, keyword)
+                VALUES (:santa_id, :keyword)
             ");
 
-            $this->db->bind(':gifter', $santa_id);
-            $this->db->bind(':gifted', $santa_id_to_set);
+            $this->db->bind(':santa_id', $santa_id);
+            $this->db->bind(':keyword', $keyword);
 
             // Execute
             $this->db->execute();
