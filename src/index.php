@@ -1,8 +1,14 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
+/**
+ * An example and the page that output's the secret santas
+ *
+ * @package     secret-santa
+ * @author      Liam Kelly <https://github.com/likel>
+ * @copyright   2017 Liam Kelly
+ * @license     GPL-3.0 License <https://github.com/likel/secret-santa/blob/master/LICENSE>
+ * @link        https://github.com/likel/secret-santa
+ * @version     1.0.0
+ */
 require_once('autoload.php');
 
 use Likel\Santa\Object as SantaClause;
