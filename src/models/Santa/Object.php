@@ -114,7 +114,7 @@ class Object
         $gifted = $this->hasGiftee($santa_id);
         if(empty($gifted)) {
             $santas_remaining = $this->getSantas(true);
-            var_dump($santas_remaining);
+            
             $santa_id_to_set = $santa_id;
             while($santa_id_to_set == $santa_id) {
                 $random_santa = array_rand($santas_remaining);
