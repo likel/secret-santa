@@ -14,7 +14,7 @@ require_once('autoload.php');
 use Likel\Santa\Object as SantaClause;
 $ss = new SantaClause();
 
-$ss->truncate();
+//$ss->truncate();
 
 // Get the santa's DB id using the $_GET['santa'] variable
 $santa = $ss->isSanta();

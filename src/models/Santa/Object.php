@@ -72,8 +72,8 @@ class Object
         } else {
             $this->db->query("
                 SELECT a.* FROM {$this->db->getTableName("santas")} AS a
-                LEFT JOIN {$this->db->getTableName("kids")} AS b ON a.id = b.gifter
-                WHERE b.gifter IS NULL
+                LEFT JOIN {$this->db->getTableName("kids")} AS b ON a.id = b.gifted
+                WHERE b.gifted IS NULL
             ");
         }
 
@@ -114,7 +114,7 @@ class Object
         $gifted = $this->hasGiftee($santa_id);
         if(empty($gifted)) {
             $santas_remaining = $this->getSantas(true);
-
+            
             $santa_id_to_set = $santa_id;
             while($santa_id_to_set == $santa_id) {
                 $random_santa = array_rand($santas_remaining);
@@ -185,7 +185,7 @@ class Object
         } else {
             $this->db->query("
                 SELECT a.* FROM {$this->db->getTableName("santas")} AS a
-                LEFT JOIN {$this->db->getTableName("keywords")} AS b ON a.id = b.santa_id
+                LEFT JOIN {$this->db->getTableName("keywords")} AS b ON a.santa_keyword = b.keyword
                 WHERE b.santa_id IS NULL
             ");
         }
